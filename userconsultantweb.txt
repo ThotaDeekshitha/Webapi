@@ -1,0 +1,666 @@
+import javax.persistence.*;
+
+@Entity
+public class User {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String name;
+    private String email;
+    private String phoneNo;
+    private int age;
+
+    @Enumerated(EnumType.STRING)
+    private UserRole role;
+
+    // Getters and setters
+
+    public Long getId() {
+        return id;
+    }
+public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getPhoneNo() {
+        return phoneNo;}
+
+    public void setPhoneNo(String phoneNo) {
+        this.phoneNo = phoneNo;
+    }
+
+    public int getAge() {
+        return age;
+    }
+
+    public void setAge(int age) {
+        this.age = age;
+    }
+
+    public UserRole getRole() {
+        return role;
+    }
+
+    public void setRole(UserRole role) {
+        this.role = role;
+    }
+}
+Slot Entity:
+import javax.persistence.*;
+import java.time.LocalDateTime;
+
+@Entity
+public class Slot {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private LocalDateTime startTime;
+    private LocalDateTime endTime;
+    private Long consultantId;
+
+    // Getters and setters
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public LocalDateTime getStartTime() {
+        return startTime;
+    }
+
+    public void setStartTime(LocalDateTime startTime) {
+        this.startTime = startTime;
+    }
+
+    public LocalDateTime getEndTime() {
+        return endTime;
+    }
+
+    public void setEndTime(LocalDateTime endTime) {
+        this.endTime = endTime;
+    }
+
+    public Long getConsultantId() {
+        return consultantId;
+    }
+
+    public void setConsultantId(Long consultantId) {
+        this.consultantId = consultantId;
+    }
+}
+Consultant Entity:
+
+import javax.persistence.*;
+
+@Entity
+public class Consultant {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String name;
+    private String email;
+    private String phoneNo;
+    private int age;
+    private String expertise;
+    private int experience;
+
+    // Getters and setters
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getPhoneNo() {
+        return phoneNo;
+    }
+
+    public void setPhoneNo(String phoneNo) {
+        this.phoneNo = phoneNo;
+    }
+
+    public int getAge() {
+        return age;
+    }
+
+    public void setAge(int age) {
+        this.age = age;
+    }
+
+    public String getExpertise() {
+        return expertise;
+    }
+
+    public void setExpertise(String expertise) {
+        this.expertise = expertise;
+    }
+
+    public int getExperience() {
+        return experience;
+    }
+
+    public void setExperience(int experience) {
+        this.experience = experience;
+    }
+}
+User Repository:
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+import java.util.List;
+
+@Repository
+public interface UserRepository extends JpaRepository<User, Long> {
+    // Custom query method to find a user by name, email, phoneNo, and age
+    List<User> findByNameAndEmailAndPhoneNoAndAge(String name, String email, String phoneNo, int age);
+}
+slot Repository:
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface SlotRepository extends JpaRepository<Slot, Long> {
+    // You can add custom query methods here if needed
+
+    // Example of a custom query method to find slots by consultantId
+    List<Slot> findByConsultantId(Long consultantId);
+}
+consultant repository:
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface ConsultantRepository extends JpaRepository<Consultant, Long> {
+    // You can add custom query methods here if needed
+
+    // Example of a custom query method to find consultants by expertise and experience
+    List<Consultant> findByExpertiseAndExperience(String expertise, int experience);
+}
+user service:
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+@Service
+public class UserService {
+
+    @Autowired
+    private UserRepository userRepository;
+
+    public User registerUser(User user) {
+        // Validate user input
+        if (user == null) {
+            throw new IllegalArgumentException("User object cannot be null.");
+        }
+        
+        // Perform additional validation, e.g., email format, age constraints, etc.
+        if (user.getAge() < 18) {
+            throw new IllegalArgumentException("Users must be at least 18 years old.");
+        }
+        
+        // Check if the user with the same email already exists
+        User existingUser = userRepository.findByEmail(user.getEmail());
+        if (existingUser != null) {
+            throw new IllegalArgumentException("A user with this email already exists.");
+        }
+
+        // Implement additional business logic if needed
+        
+        // Save the user to the database
+        return userRepository.save(user);
+    }
+
+    // Add more methods as needed
+}
+slot service:
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import java.time.LocalDateTime;
+
+@Service
+public class SlotService {
+
+    @Autowired
+    private SlotRepository slotRepository;
+
+    public Slot createSlot(Slot slot) {
+        // Validate slot input
+        if (slot == null) {
+            throw new IllegalArgumentException("Slot object cannot be null.");
+        }
+
+        // Validate that the start time is before the end time
+        if (slot.getStartTime() == null || slot.getEndTime() == null ||
+            slot.getStartTime().isAfter(slot.getEndTime())) {
+            throw new IllegalArgumentException("Invalid slot times. Start time must be before end time.");
+        }
+
+        // Check if the slot overlaps with existing slots for the same consultant (if needed)
+        // Example: You may want to add logic to check if the slot overlaps with other slots for the same consultant.
+
+        // Implement additional business logic if needed
+        
+        // Save the slot to the database
+        return slotRepository.save(slot);
+    }
+
+    // Add more methods as needed
+}
+consultant service:
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+@Service
+public class ConsultantService {
+
+    @Autowired
+    private ConsultantRepository consultantRepository;
+
+    public List<Consultant> searchConsultants(String expertise, int experience) {
+        // Validate input parameters
+        if (expertise == null || expertise.isEmpty() || experience < 0) {
+            throw new IllegalArgumentException("Invalid search parameters.");
+        }
+
+        // Implement consultant search logic based on expertise and experience
+        List<Consultant> consultants = consultantRepository.findByExpertiseAndExperience(expertise, experience);
+
+        // You can implement additional filtering or sorting logic here if needed
+
+        return consultants;
+    }
+
+    // Add more methods as needed
+}
+user controller:
+    import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/users")
+public class UserController {
+
+    @Autowired
+    private UserService userService;
+
+    @PostMapping("/register")
+    public ResponseEntity<UserResponseDTO> registerUser(@RequestBody UserDTO userDTO) {
+        // Convert UserDTO to User entity
+        User user = new User();
+        user.setName(userDTO.getName());
+        user.setEmail(userDTO.getEmail());
+        user.setPhoneNo(userDTO.getPhoneNo());
+        user.setAge(userDTO.getAge());
+        user.setRole(userDTO.getRole());
+
+        User registeredUser = userService.registerUser(user);
+
+        // Convert registeredUser to UserResponseDTO
+        UserResponseDTO responseDTO = new UserResponseDTO();
+        responseDTO.setId(registeredUser.getId());
+        responseDTO.setName(registeredUser.getName());
+        responseDTO.setEmail(registeredUser.getEmail());
+        responseDTO.setPhoneNo(registeredUser.getPhoneNo());
+        responseDTO.setAge(registeredUser.getAge());
+        responseDTO.setRole(registeredUser.getRole());
+
+        return ResponseEntity.ok(responseDTO);
+    }
+
+    @GetMapping("/all")
+    public ResponseEntity<List<UserResponseDTO>> getAllUsers() {
+        List<User> users = userService.getAllUsers();
+
+        // Convert List<User> to List<UserResponseDTO>
+        List<UserResponseDTO> responseDTOs = users.stream()
+                .map(user -> {
+                    UserResponseDTO responseDTO = new UserResponseDTO();
+                    responseDTO.setId(user.getId());
+                    responseDTO.setName(user.getName());
+                    responseDTO.setEmail(user.getEmail());
+                    responseDTO.setPhoneNo(user.getPhoneNo());
+                    responseDTO.setAge(user.getAge());
+                    responseDTO.setRole(user.getRole());
+                    return responseDTO;
+                })
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(responseDTOs);
+    }
+
+    // Add more user-related endpoints as needed
+}
+
+slot controller:
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+@RestController
+@RequestMapping("/api/slots")
+public class SlotController {
+
+    @Autowired
+    private SlotService slotService;
+
+    @PostMapping("/create")
+    public ResponseEntity<SlotResponseDTO> createSlot(@RequestBody SlotDTO slotDTO) {
+        // Convert SlotDTO to Slot entity
+        Slot slot = new Slot();
+        slot.setStartTime(slotDTO.getStartTime());
+        slot.setEndTime(slotDTO.getEndTime());
+        slot.setConsultantId(slotDTO.getConsultantId());
+
+        Slot createdSlot = slotService.createSlot(slot);
+
+        // Convert createdSlot to SlotResponseDTO
+        SlotResponseDTO responseDTO = new SlotResponseDTO();
+        responseDTO.setId(createdSlot.getId());
+        responseDTO.setStartTime(createdSlot.getStartTime());
+        responseDTO.setEndTime(createdSlot.getEndTime());
+        responseDTO.setConsultantId(createdSlot.getConsultantId());
+
+        return ResponseEntity.ok(responseDTO);
+    }
+
+    @GetMapping("/all")
+    public ResponseEntity<List<SlotResponseDTO>> getAllSlots() {
+        List<Slot> slots = slotService.getAllSlots();
+
+        // Convert List<Slot> to List<SlotResponseDTO>
+        List<SlotResponseDTO> responseDTOs = slots.stream()
+                .map(slot -> {
+                    SlotResponseDTO responseDTO = new SlotResponseDTO();
+                    responseDTO.setId(slot.getId());
+                    responseDTO.setStartTime(slot.getStartTime());
+                    responseDTO.setEndTime(slot.getEndTime());
+                    responseDTO.setConsultantId(slot.getConsultantId());
+                    return responseDTO;
+                })
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(responseDTOs);
+    }
+
+    // Add more slot-related endpoints as needed
+}
+
+    
+consultant controller:
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+@RestController
+@RequestMapping("/api/consultants")
+public class ConsultantController {
+
+    @Autowired
+    private ConsultantService consultantService;
+
+    @PostMapping("/create")
+    public ResponseEntity<ConsultantResponseDTO> createConsultant(@RequestBody ConsultantDTO consultantDTO) {
+        // Convert ConsultantDTO to Consultant entity
+        Consultant consultant = new Consultant();
+        consultant.setName(consultantDTO.getName());
+        consultant.setEmail(consultantDTO.getEmail());
+        consultant.setPhoneNo(consultantDTO.getPhoneNo());
+        consultant.setAge(consultantDTO.getAge());
+        consultant.setExpertise(consultantDTO.getExpertise());
+        consultant.setExperience(consultantDTO.getExperience());
+
+        Consultant createdConsultant = consultantService.createConsultant(consultant);
+
+        // Convert createdConsultant to ConsultantResponseDTO
+        ConsultantResponseDTO responseDTO = new ConsultantResponseDTO();
+        responseDTO.setId(createdConsultant.getId());
+        responseDTO.setName(createdConsultant.getName());
+        responseDTO.setEmail(createdConsultant.getEmail());
+        responseDTO.setPhoneNo(createdConsultant.getPhoneNo());
+        responseDTO.setAge(createdConsultant.getAge());
+        responseDTO.setExpertise(createdConsultant.getExpertise());
+        responseDTO.setExperience(createdConsultant.getExperience());
+
+        return ResponseEntity.ok(responseDTO);
+    }
+
+    @GetMapping("/all")
+    public ResponseEntity<List<ConsultantResponseDTO>> getAllConsultants() {
+        List<Consultant> consultants = consultantService.getAllConsultants();
+
+        // Convert List<Consultant> to List<ConsultantResponseDTO>
+        List<ConsultantResponseDTO> responseDTOs = consultants.stream()
+                .map(consultant -> {
+                    ConsultantResponseDTO responseDTO = new ConsultantResponseDTO();
+                    responseDTO.setId(consultant.getId());
+                    responseDTO.setName(consultant.getName());
+                    responseDTO.setEmail(consultant.getEmail());
+                    responseDTO.setPhoneNo(consultant.getPhoneNo());
+                    responseDTO.setAge(consultant.getAge());
+                    responseDTO.setExpertise(consultant.getExpertise());
+                    responseDTO.setExperience(consultant.getExperience());
+                    return responseDTO;
+                })
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(responseDTOs);
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<List<ConsultantResponseDTO>> searchConsultants(
+            @RequestParam(required = true) String expertise,
+            @RequestParam(required = true) int experience) {
+        List<Consultant> consultants = consultantService.searchConsultants(expertise, experience);
+
+        // Convert List<Consultant> to List<ConsultantResponseDTO>
+        List<ConsultantResponseDTO> responseDTOs = consultants.stream()
+                .map(consultant -> {
+                    ConsultantResponseDTO responseDTO = new ConsultantResponseDTO();
+                    responseDTO.setId(consultant.getId());
+                    responseDTO.setName(consultant.getName());
+                    responseDTO.setEmail(consultant.getEmail());
+                    responseDTO.setPhoneNo(consultant.getPhoneNo());
+                    responseDTO.setAge(consultant.getAge());
+                    responseDTO.setExpertise(consultant.getExpertise());
+                    responseDTO.setExperience(consultant.getExperience());
+                    return responseDTO;
+                })
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(responseDTOs);
+    }
+
+    // Add more consultant-related endpoints as needed
+}
+user DTO(Request):
+public class UserDTO {
+    private String name;
+    private String email;
+    private String phoneNo;
+    private int age;
+    private UserRole role;
+    
+    // Getters and setters
+}
+slot DTO(Request):
+import java.time.LocalDateTime;
+
+public class SlotDTO {
+    private LocalDateTime startTime;
+    private LocalDateTime endTime;
+    private Long consultantId;
+    
+    // Getters and setters
+}
+consultant DTO(Request):
+public class ConsultantDTO {
+    private String name;
+    private String email;
+    private String phoneNo;
+    private int age;
+    private String expertise;
+    private int experience;
+    
+    // Getters and setters
+}
+UserResponseDTO (Response)
+
+public class UserResponseDTO {
+    private Long id;
+    private String name;
+    private String email;
+    private String phoneNo;
+    private int age;
+    private UserRole role;
+    
+    // Getters and setters
+}
+SlotResponseDTO (Response)
+
+import java.time.LocalDateTime;
+
+public class SlotResponseDTO {
+    private Long id;
+    private LocalDateTime startTime;
+    private LocalDateTime endTime;
+    private Long consultantId;
+    
+    // Getters and setters
+}
+ConsultantResponseDTO (Response)
+
+public class ConsultantResponseDTO {
+    private Long id;
+    private String name;
+    private String email;
+    private String phoneNo;
+    private int age;
+    private String expertise;
+    private int experience;
+    
+    // Getters and setters
+}
+Client Entity:
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+
+@Entity
+public class Client {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String name;
+    private String email;
+    private String phoneNo;
+    private int age;
+
+    // Constructors, getters, setters, etc.
+}
+Consultant Entity:
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+
+@Entity
+public class Consultant {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String name;
+    private String email;
+    private String phoneNo;
+    private int age;
+    private String expertise;
+    private int experience;
+
+    // Constructors, getters, setters, etc.
+}
+Slot Entity:
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import java.time.LocalDateTime;
+
+@Entity
+public class Slot {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private LocalDateTime startTime;
+    private LocalDateTime endTime;
+    private Long consultantId;
+
+    // Constructors, getters, setters, etc.
+}
+# H2 database configuration
+spring.datasource.url=jdbc:h2:mem:testdb
+spring.datasource.driverClassName=org.h2.Driver
+spring.datasource.username=sa
+spring.datasource.password=password
+spring.jpa.hibernate.ddl-auto=update
+
